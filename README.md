@@ -2,8 +2,6 @@
 
 An interactive 3D model of the Emirate of Dubai, from Hatta to Jebel Ali, built entirely from OpenStreetMap data. Every road, building footprint, community boundary, cycle track and rail line is placed at its real WGS84 coordinate.
 
-**Live:** https://ahamedshafeek.me/dubai-digital-twin/
-
 ## Run it
 
 Open `index.html` in Chrome, Edge, Safari or Firefox. No build step or server is needed, but it does need an internet connection for map tiles and the two libraries.
@@ -91,6 +89,18 @@ The default camera reproduces the aro.ae reference view: zoom 14.1, pitch 44.5°
 - **Communities:** OSM currently maps 162 admin boundaries. Dubai Municipality defines more communities than that. The official layer is published on Dubai Pulse; swapping it into `data/communities.js` would give the full official set.
 - **Building heights** are only as good as OSM tagging. The towers are well mapped; many villas and low-rise buildings use defaults.
 - **Traffic and trains are simulated.** They move on the real network at plausible speeds and headways, but Dubai has no open real-time vehicle feed.
+
+## Deploying (Cloudflare Pages)
+
+It's a static site with no build step. In Cloudflare Pages, connect this repository and use:
+
+| Setting | Value |
+|---|---|
+| Framework preset | None |
+| Build command | *(leave empty)* |
+| Build output directory | `/` |
+
+The largest file (`data/downtown.js`, ~3.7 MB) is well under Cloudflare's 25 MB per-file limit. Map tiles, imagery and libraries load from public CDNs at runtime.
 
 ## Refreshing the data
 
