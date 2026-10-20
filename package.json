@@ -1,0 +1,15 @@
+{
+  "name": "dubai-digital-twin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "3D digital twin of the Emirate of Dubai built on OpenStreetMap data with MapLibre GL",
+  "type": "module",
+  "scripts": {
+    "build:data": "node scripts/build-data.mjs",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "osmtogeojson": "3.0.0-beta.5",
+    "polylabel": "2.1.0"
+  }
+}

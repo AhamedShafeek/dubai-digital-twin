@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-theme="satellite">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dubai Digital Twin</title>
+  <meta name="description" content="Interactive 3D digital twin of the Emirate of Dubai built from OpenStreetMap: buildings, roads, communities, cycle tracks, metro and tram.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23151922'/%3E%3Cpath d='M12 3l.7 4.4 1.4.7v2.8l1.4.8v2.5l1.2.7V21H7.3v-4.1l1.2-.7v-2.5l1.4-.8V8.1l1.4-.7z' fill='%23E2A341'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Aref+Ruqaa:wght@700&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="map" aria-label="3D map of Dubai"></div>
+
+  <header class="topbar panel">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l.9 5.6 1.8.9v3.6l1.8 1v3.2l1.5.9V22H6v-5.3l1.5-.9v-3.2l1.8-1V8l1.8-.9z"/></svg>
+      <div><strong>Dubai</strong><span>Digital Twin</span></div>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="search" type="search" placeholder="Search communities, landmarks, stations or lat, lon" autocomplete="off" spellcheck="false"
+             role="combobox" aria-expanded="false" aria-controls="search-results" aria-autocomplete="list" aria-label="Search Dubai">
+      <kbd>/</kbd>
+      <ul id="search-results" class="results panel" role="listbox" hidden></ul>
+    </div>
+  </header>
+
+  <div class="modes panel" role="radiogroup" aria-label="Map mode">
+    <button role="radio" data-theme="satellite" aria-checked="true">Realistic</button>
+    <button role="radio" data-theme="day" aria-checked="false">Day</button>
+    <button role="radio" data-theme="dusk" aria-checked="false">Dusk</button>
+    <button role="radio" data-theme="night" aria-checked="false">Night</button>
+  </div>
+
+  <aside id="layers" class="layers panel" aria-label="Layers" hidden>
+    <div class="panel-head">
+      <h2>Layers</h2>
+      <button id="layers-close" class="icon-btn" aria-label="Close layers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+
+    <section>
+      <h3>City fabric</h3>
+      <label class="toggle"><input type="checkbox" data-layer="buildings"><span class="sw"></span><span class="name">3D buildings</span><span class="meta">OSM heights</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="models"><span class="sw"></span><span class="name">Detailed 3D Downtown &amp; icons</span><span class="meta">900+ buildings</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="roads"><span class="sw"></span><span class="name">Road network</span><span class="meta">all classes</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="roadLabels"><span class="sw"></span><span class="name">Road names &amp; E/D routes</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="pois"><span class="sw"></span><span class="name">Points of interest</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="hillshade"><span class="sw"></span><span class="name">Relief shading</span><span class="meta">dunes, Hajar</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="terrain"><span class="sw"></span><span class="name">3D terrain</span><span class="meta">best in Hatta</span></label>
+    </section>
+
+    <section>
+      <h3>Communities &amp; boundaries</h3>
+      <label class="toggle"><input type="checkbox" data-layer="communities"><span class="sw"></span><span class="name">Communities</span><span class="meta" data-count="communities"></span></label>
+      <label class="toggle"><input type="checkbox" data-layer="districts"><span class="sw"></span><span class="name">Districts, projects &amp; islands</span><span class="meta" data-count="districts"></span></label>
+      <label class="toggle"><input type="checkbox" data-layer="boundary"><span class="sw"></span><span class="name">Emirate boundary</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="mask"><span class="sw"></span><span class="name">Fade outside Dubai</span></label>
+    </section>
+
+    <section>
+      <h3>Mobility</h3>
+      <label class="toggle"><input type="checkbox" data-layer="cycle"><span class="sw"></span><span class="name"><i class="swatch cycle"></i>Cycle tracks</span><span class="meta" data-count="cycle"></span></label>
+      <label class="toggle"><input type="checkbox" data-layer="transit"><span class="sw"></span><span class="name"><i class="swatch metro"></i>Metro, tram &amp; rail</span><span class="meta" data-count="transit"></span></label>
+      <label class="toggle"><input type="checkbox" data-layer="traffic"><span class="sw"></span><span class="name">Traffic flow</span><span class="meta">simulated</span></label>
+      <label class="toggle"><input type="checkbox" data-layer="trains"><span class="sw"></span><span class="name">Moving trains</span><span class="meta">simulated</span></label>
+      <div class="slider">
+        <label for="speed">Simulation speed</label>
+        <input id="speed" type="range" min="1" max="30" step="1">
+        <output id="speed-val" for="speed"></output>
+      </div>
+      <div class="seg">
+        <span id="density-label">Traffic density</span>
+        <div role="radiogroup" aria-labelledby="density-label">
+          <button role="radio" data-density="light">Light</button>
+          <button role="radio" data-density="normal">Normal</button>
+          <button role="radio" data-density="rush">Rush hour</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3>Places</h3>
+      <label class="toggle"><input type="checkbox" data-layer="landmarks"><span class="sw"></span><span class="name">Landmarks</span><span class="meta" data-count="landmarks"></span></label>
+      <label class="toggle"><input type="checkbox" data-layer="telecom"><span class="sw"></span><span class="name">Telecom masts &amp; towers</span><span class="meta" data-count="telecom"></span></label>
+    </section>
+
+    <section class="legend">
+      <h3>Building height</h3>
+      <div class="ramp"></div>
+      <div class="ramp-labels"><span>0</span><span>18</span><span>60</span><span>150</span><span>320+ m</span></div>
+      <h3>Transit lines</h3>
+      <div class="lines">
+        <span><i style="background:#CC0000"></i>Red</span><span><i style="background:#00CC00"></i>Green</span>
+        <span><i style="background:#0072BC"></i>Blue (2029)</span><span><i style="background:#E58A00"></i>Tram</span>
+        <span><i style="background:#7B4FA0"></i>Monorail / APM</span><span><i style="background:#A6192E"></i>Etihad Rail</span>
+      </div>
+      <h3>Landmarks</h3>
+      <div class="lines" id="legend-cats"></div>
+    </section>
+
+    <p class="credits">Data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL). Rebuild overlays with <code>npm run build:data</code>.</p>
+  </aside>
+
+  <nav class="toolbar panel" aria-label="Map controls">
+    <button data-act="layers" aria-label="Layers" aria-expanded="false" title="Layers (L)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+    <hr>
+    <button data-act="zoom-in" aria-label="Zoom in" title="Zoom in (+)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button data-act="zoom-out" aria-label="Zoom out" title="Zoom out (−)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+    <button data-act="compass" aria-label="Reset north" title="Reset north (N)"><svg viewBox="0 0 24 24" aria-hidden="true"><g id="compass-needle"><path class="needle-n" d="M12 3l3.2 9H8.8z"/><path d="M12 21l-3.2-9h6.4z"/></g></svg></button>
+    <button data-act="pitch" aria-label="Toggle 2D / 3D" title="2D / 3D (V)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></button>
+    <hr>
+    <button data-act="orbit" aria-label="Orbit" title="Orbit (O)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4v5h-5"/></svg></button>
+    <button data-act="tour" aria-label="Cinematic tour" title="Cinematic tour (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg></button>
+    <button data-act="home" aria-label="Reset view" title="Reset view (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg></button>
+    <hr>
+    <button data-act="snapshot" aria-label="Save snapshot" title="Save PNG snapshot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+    <button data-act="fullscreen" aria-label="Fullscreen" title="Fullscreen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button data-act="help" aria-label="Keyboard shortcuts" title="Shortcuts (?)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.7"/><path d="M12 17.2v.1"/></svg></button>
+  </nav>
+
+  <div id="help" class="help panel" hidden>
+    <div class="panel-head"><h2>Shortcuts</h2><button class="icon-btn" data-act="help" aria-label="Close shortcuts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <dl>
+      <dt>Drag</dt><dd>Move</dd>
+      <dt>Right-drag / Ctrl-drag</dt><dd>Rotate &amp; tilt</dd>
+      <dt>Scroll</dt><dd>Zoom</dd>
+      <dt><kbd>/</kbd></dt><dd>Search</dd>
+      <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Realistic · Day · Dusk · Night</dd>
+      <dt><kbd>V</kbd></dt><dd>2D / 3D</dd>
+      <dt><kbd>O</kbd> <kbd>T</kbd></dt><dd>Orbit · Tour</dd>
+      <dt><kbd>N</kbd> <kbd>R</kbd></dt><dd>North · Reset view</dd>
+      <dt><kbd>L</kbd> <kbd>F</kbd></dt><dd>Layers · Fullscreen</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Stop / close</dd>
+    </dl>
+  </div>
+
+  <section id="info" class="info panel" aria-live="polite" hidden></section>
+  <div id="tooltip" class="tooltip" hidden></div>
+  <div id="caption" class="caption panel" hidden></div>
+  <div id="toast" class="toast panel" role="status" hidden></div>
+
+  <div id="dest" class="dest" aria-label="Destinations"></div>
+
+  <footer class="statusbar panel">
+    <span id="st-where" class="where">Dubai</span>
+    <button id="st-cursor" class="cursor" title="Click to copy">—</button>
+    <span id="st-view"></span>
+    <span id="st-osm" class="osm"></span>
+  </footer>
+
+  <div id="loader">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5l.9 5.6 1.8.9v3.6l1.8 1v3.2l1.5.9V22H6v-5.3l1.5-.9v-3.2l1.8-1V8l1.8-.9z"/></svg>
+    <strong>Dubai Digital Twin</strong>
+    <span>Loading the emirate…</span>
+    <div class="bar"><i></i></div>
+  </div>
+
+  <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+    window.THREE = THREE;
+    window.THREE_ADDONS = { mergeGeometries };
+    window.dispatchEvent(new Event('three-ready'));
+  </script>
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.3.11/dist.min.js"></script>
+  <script src="data/meta.js"></script>
+  <script src="data/boundary.js"></script>
+  <script src="data/communities.js"></script>
+  <script src="data/places.js"></script>
+  <script src="data/cycleways.js"></script>
+  <script src="data/transit.js"></script>
+  <script src="data/roads.js"></script>
+  <script src="data/telecom.js"></script>
+  <script src="data/landmarks.js"></script>
+  <script src="data/landmark-models.js"></script>
+  <script src="data/downtown.js"></script>
+  <script src="js/style.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/models/kit.js"></script>
+  <script src="js/models/ortho.js"></script>
+  <script src="js/models/burj-khalifa.js"></script>
+  <script src="js/models/burj-al-arab.js"></script>
+  <script src="js/models/museum-of-the-future.js"></script>
+  <script src="js/models/downtown/textures.js"></script>
+  <script src="js/models/downtown/dubai-mall.js"></script>
+  <script src="js/models/downtown/dubai-opera.js"></script>
+  <script src="js/models/downtown/address-towers.js"></script>
+  <script src="js/models/downtown/landscape.js"></script>
+  <script src="js/models/downtown/roads.js"></script>
+  <script src="js/models/downtown/fabric.js"></script>
+  <script src="js/models/layer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
