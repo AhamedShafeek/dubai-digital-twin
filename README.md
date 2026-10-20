@@ -2,7 +2,7 @@
 
 An interactive 3D model of the Emirate of Dubai, from Hatta to Jebel Ali, built entirely from OpenStreetMap data. Every road, building footprint, community boundary, cycle track and rail line is placed at its real WGS84 coordinate.
 
-**Live:** https://ahamedshafeek.github.io/dubai-digital-twin/
+**Live:** https://ahamedshafeek.me/dubai-digital-twin/
 
 ## Run it
 
